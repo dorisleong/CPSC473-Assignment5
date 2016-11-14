@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+
+<head>
+  <title>Assignment 5</title>
+  <link rel="stylesheet" type="text/css" href="css/trivia.css">
+  <meta charset="UTF-8">
+</head>
+
+<body>
+  <h1>Trivia Game</h1>
+
+  <!--show scores next to user-->
+  <ul id="onlineUsers">
+    <li>TestUser<span class="score"></span></li>
+  </ul>
+  
+  <div class="join">
+    <h2>Join the game</h2>
+    <input type="text" placeholder="Username" id="username" />
+    <button id="inputUsername">Submit</button>
+    <!--same username as another?-->
+    <p><span id="usernameError"></span></p> 
+  </div>
+
+  <!--when submitted, show game-->
+  <div class="game">
+    <button id="start">Play</button>
+    <p>Next round in: <span class="roundTime"></span></p>
+    <!--ready? show question-->
+    <div class="round">
+      <p>The correct answer from last round was: <span id="correctAnswer"></span></p>
+      <p>Time remaining: <span class="roundTime"></span></p>
+      <p><span id="question"></span></p>
+      <input type="text" placeholder="Answer" id="guess" />
+      <button id="inputGuess">Submit</button>
+      <p><span id="result"></span></p>
+    </div>
+  </div>
+
+  <h2>Create your own question</h2>
+
+  <input type="text" placeholder="Question" id="newQuestion" />
+  <input type="text" placeholder="Answer" id="newAnswer" />
+  <button id="addQuestion">Add Question</button>
+
+  <p><span id="addConfirmation"></span></p>
+
+  <script src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
+  <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+  <script src="javascripts/app.js"></script>
+</body>
+
+</html>
