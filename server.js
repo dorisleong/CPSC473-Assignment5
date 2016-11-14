@@ -1,32 +1,46 @@
 var express = require('express'),
-  http = require('http'),
   bodyParser = require('body-parser'),
   mongoose = require('mongoose'),
   autoIncrement = require('mongoose-auto-increment'),
   redis = require('redis'),
   app = express(),
-  http = require('http').Server(app),
-  io = require('socket.io')(http),
+  server = require('http').Server(app),
+  io = require('socket.io')(server),
   users = [];
+
+
 app.use(express.static(__dirname + '/static'));
 
+// on connection/disconnect of user, update user list
 // referenced code on stackoverflow 
-// http://stackoverflow.com/questions/19267230/socket-io-node-jsretrieving-list-of-connected-users-to-the-client
-io.on('connection', function(socket){
+// http://stackoverflow.com/questions/8284116/create-a-list-of-connected-clients-using-socket-io
+io.sockets.on('connection', function(socket) {
   'use strict';
-  console.log('a user connected');
-  socket.on('userJoin', function (user) {
-    socket.user = user;
-    users.push(user);
-    io.sockets.emit('update', users);
-  });
-  socket.on('disconnect', function () {
-    for(var i=0; i<users.length; i++) {
-      if(users[i] == socket.user) {
-        delete users[users[i]];
+  socket.emit('update', users);
+  console.log('User connected: ' + socket.id);
+  users.push({id: socket.id});
+  
+  socket.on('userJoin', function(username) {
+    for (var i=0; i<users.length;i++) {
+      if (users[i].id == socket.id) {
+        users[i].username = username;
       }
     }
-    io.sockets.emit('update', users); 
+  });
+
+  socket.on('disconnect', function() {
+    console.log('User disconnected: ' + socket.id);
+    users.splice(users.indexOf(socket), 1);
+  });
+});
+
+io.on('connection', function(socket){
+  'use strict';
+  socket.on('anotherUserJoins', function(msg){
+    io.emit('update', users);
+  });
+  socket.on('disconnect', function(msg){
+    io.emit('update', users);
   });
 });
 
@@ -88,7 +102,7 @@ client.on('connect', function() {
   client.set('wrong', 0);
 });
 
-http.createServer(app).listen(3000);
+server.listen(3000);
 console.log('Server running on port 3000');
 
 // User creates new question -> add to mongodb
@@ -141,7 +155,8 @@ app.post('/answer', function (req, res) {
     }
     console.log('returning: '+ result);
     res.json({
-      correct: result
+      correct: result,
+      answer: answer.answer
     });
   });
 });

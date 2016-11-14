@@ -38,14 +38,16 @@
     </div>
   </div>
 
-  <h2>Create your own question</h2>
+  <button id="createShow">+ Create a question</button>
+    <div class="create">
+    <h2>Create your own question</h2>
 
-  <input type="text" placeholder="Question" id="newQuestion" />
-  <input type="text" placeholder="Answer" id="newAnswer" />
-  <button id="addQuestion">Add Question</button>
+    <input type="text" placeholder="Question" id="newQuestion" />
+    <input type="text" placeholder="Answer" id="newAnswer" />
+    <button id="addQuestion">Add Question</button>
 
-  <p><span id="addConfirmation"></span></p>
-
+    <p><span id="addConfirmation"></span></p>
+  </div>
   <script src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
   <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
   <script src="javascripts/app.js"></script>

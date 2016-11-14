@@ -1,6 +1,7 @@
 var main = function () {
   'use strict';
   var currentAnswerId;
+  var correctAnswer;
   var socket = io.connect('http://localhost:3000/');
   var userList = [];
 
@@ -9,7 +10,9 @@ var main = function () {
     userList = users;
     $('#onlineUsers').empty();
     for(var i=0; i<userList.length; i++) {
-      $('#onlineUsers').append('<li>' + userList[i] + '</li>'); 
+      if (userList[i].username != null) {
+        $('#onlineUsers').append('<li>' + userList[i].username + '</li>'); 
+      }
     }
   });
   
@@ -43,13 +46,14 @@ var main = function () {
   //Send guess to server returns if correct (POST /answer)
   var postGuess = function () {
     var guess = $('#guess').val();
-    postAJAX('/question',JSON.stringify({answer: guess}), function(response){
+    postAJAX('/question',JSON.stringify({answerId: currentAnswerId, answer: guess}), function(response){
       if (response.correct === true) {
         $('#result').text('Correct!');
       }
       else {
         $('#result').text('Wrong!');
       }
+      correctAnswer = response.answer;
     });
   }
 
@@ -74,20 +78,32 @@ var main = function () {
     });
   }
 
-  //start with game, round hidden
+  //start with game, round, create sections hidden
   $('.game').hide();
   $('.round').hide();
+  $('.create').hide();
+
+  $('#createShow').click(function() {
+    $('.create').toggle();
+  });
 
   $('#inputUsername').click(function() {
     //check if no socket user with same name
     var username = $('#username').val();
-    if ($.inArray(username, userList) == -1) {
+    var taken = false;
+
+    for (var i=0; i< userList.length; i++) {
+      if (userList[i].username == username) {
+        $('#usernameError').text('Username taken');
+        taken = true;
+      }
+    }
+
+    if (!taken) {
       socket.emit('userJoin', username);
+      socket.emit('anotherUserJoins', username);
       $('.game').show();
       $('.join').hide();
-    }
-    else {
-      $('#usernameError').text('Username taken');
     }
   });
 
@@ -99,6 +115,20 @@ var main = function () {
   $('#addQuestion').click(function() {
     postQuestion();
   });
+
+  var count = 15;
+  var counter = setInterval(timer, 1000);
+
+  function timer() {
+    $('.roundTime').text(count);
+    count -= 1;
+    if (count < 0)
+    {
+      getQuestion();
+      count = 15;
+      return;
+    }
+  }
 
 };
 
