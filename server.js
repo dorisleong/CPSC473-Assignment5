@@ -8,42 +8,6 @@ var express = require('express'),
   io = require('socket.io')(server),
   users = [];
 
-
-app.use(express.static(__dirname + '/static'));
-
-// on connection/disconnect of user, update user list
-// referenced code on stackoverflow 
-// http://stackoverflow.com/questions/8284116/create-a-list-of-connected-clients-using-socket-io
-io.sockets.on('connection', function(socket) {
-  'use strict';
-  socket.emit('update', users);
-  console.log('User connected: ' + socket.id);
-  users.push({id: socket.id});
-  
-  socket.on('userJoin', function(username) {
-    for (var i=0; i<users.length;i++) {
-      if (users[i].id == socket.id) {
-        users[i].username = username;
-      }
-    }
-  });
-
-  socket.on('disconnect', function() {
-    console.log('User disconnected: ' + socket.id);
-    users.splice(users.indexOf(socket), 1);
-  });
-});
-
-io.on('connection', function(socket){
-  'use strict';
-  socket.on('anotherUserJoins', function(msg){
-    io.emit('update', users);
-  });
-  socket.on('disconnect', function(msg){
-    io.emit('update', users);
-  });
-});
-
 app.use(express.static(__dirname + '/static'));
 
 // tell Express to parse incoming
@@ -98,12 +62,54 @@ var client = redis.createClient();
 client.on('connect', function() {
   'use strict';
   console.log('Connected to redis');
-  client.set('right', 0);
-  client.set('wrong', 0);
 });
 
 server.listen(3000);
 console.log('Server running on port 3000');
+
+// on connection/disconnect of user, update user list
+// referenced code on stackoverflow 
+// http://stackoverflow.com/questions/8284116/create-a-list-of-connected-clients-using-socket-io
+
+io.sockets.on('connection', function(socket) {
+  'use strict';
+  socket.emit('update', users);
+  console.log('User connected: ' + socket.id);
+  users.push({id: socket.id});
+  
+  socket.on('userJoin', function(username) {
+    for (var i=0; i<users.length;i++) {
+      if (users[i].id == socket.id) {
+        users[i].username = username;
+      }
+    }
+    client.set(username, {right: 0, wrong: 0});
+
+  });
+
+  socket.on('disconnect', function() {
+    console.log('User disconnected: ' + socket.id);
+    users.splice(users.indexOf(socket), 1);
+  });
+});
+
+io.on('connection', function(socket){
+  'use strict';
+  socket.on('play', function() {
+    io.emit('gameStart');
+  });
+
+  socket.on('endRound', function() {
+    io.emit('newQuestion');
+  });
+
+  socket.on('anotherUserJoins', function(msg){
+    io.emit('update', users);
+  });
+  socket.on('disconnect', function(msg){
+    io.emit('update', users);
+  });
+});
 
 // User creates new question -> add to mongodb
 app.post('/question', function (req, res) {
@@ -164,7 +170,7 @@ app.post('/answer', function (req, res) {
 // Return user's score
 app.get('/score', function (req, res) {
   'use strict';
-  client.mget('right','wrong', function(err, reply) {
+  client.get(req.body.username, function(err, reply) {
     console.log(reply);
     res.json({
       right: reply[0],

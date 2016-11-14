@@ -1,9 +1,11 @@
 var main = function () {
   'use strict';
+  var currentQuestion;
   var currentAnswerId;
-  var correctAnswer;
+  var currentAnswer;
   var socket = io.connect('http://localhost:3000/');
   var userList = [];
+  var answered = false;
 
   //Update the current list of players when one connects/disconnects
   socket.on('update', function (users){
@@ -37,7 +39,7 @@ var main = function () {
       type: 'GET',
       contentType: 'application/json',
       success: function (response) {
-        $('#question').text(response.question);
+        currentQuestion = response.question;
         currentAnswerId = response.answerId;
       }
     });
@@ -46,14 +48,15 @@ var main = function () {
   //Send guess to server returns if correct (POST /answer)
   var postGuess = function () {
     var guess = $('#guess').val();
-    postAJAX('/question',JSON.stringify({answerId: currentAnswerId, answer: guess}), function(response){
+    postAJAX('/answer',JSON.stringify({answerId: currentAnswerId, answer: guess}), function(response){
+      currentAnswer = response.answer;
       if (response.correct === true) {
         $('#result').text('Correct!');
       }
       else {
         $('#result').text('Wrong!');
       }
-      correctAnswer = response.answer;
+      $('#inputGuess').prop('disabled', true);
     });
   }
 
@@ -110,26 +113,55 @@ var main = function () {
   $('#start').click(function() {
     $('.round').show();
     $('#start').hide();
+    socket.emit('play');
   });
+
+  $('#inputGuess').click(function() {
+    postGuess();
+    answered = true;
+  })
 
   $('#addQuestion').click(function() {
     postQuestion();
   });
 
-  var count = 15;
-  var counter = setInterval(timer, 1000);
+  
+  getQuestion();
+  socket.on('newQuestion', function () {
+    $('.round').hide();
+    $('#start').show();
+    $('#result').empty();
+    $('#guess').val('');
+    $('#correctAnswer').text(currentAnswer);
+    getQuestion();
+  });
 
-  function timer() {
-    $('.roundTime').text(count);
-    count -= 1;
-    if (count < 0)
-    {
-      getQuestion();
-      count = 15;
-      return;
+  socket.on('gameStart', function() {
+    answered = false;
+    var count = 15;
+    clearInterval(counter);
+    
+    var counter = setInterval(timer, 1000);
+    $('#inputGuess').prop('disabled', false);
+    $('.round').show();
+    $('#start').hide();
+    $('#question').text(currentQuestion);
+    function timer() {
+      $('.roundTime').text(count);
+      count -= 1;
+      if (count < 0)
+      {
+        if (answered === false) {
+          postGuess();
+        }
+        clearInterval(counter);
+        socket.emit('endRound');
+        return;
+      }
     }
-  }
+  });
+  
 
-};
+}; //End of main
 
 $(document).ready(main);
