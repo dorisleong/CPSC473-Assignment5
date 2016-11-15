@@ -13,7 +13,7 @@ var main = function () {
     $('#onlineUsers').empty();
     for(var i=0; i<userList.length; i++) {
       if (userList[i].username != null) {
-        $('#onlineUsers').append('<li>' + userList[i].username + '</li>'); 
+        $('#onlineUsers').append('<li class="list-group-item">' + userList[i].username + '</li>'); 
       }
     }
   });
@@ -62,9 +62,13 @@ var main = function () {
 
   //Send new question and answer from input to server (POST /question)
   var postQuestion = function () {
-    postAJAX('/question',JSON.stringify({question:'Test Q', answer: 'Test A'}), function(response){
+    var questionInput = $('#newQuestion').val();
+    var answerInput = $('#newAnswer').val();
+    postAJAX('/question',JSON.stringify({question:questionInput, answer:answerInput}), function(response){
       $('#addConfirmation').text(response.confirm);
     });
+    $('#newQuestion').val('');
+    $('#newAnswer').val('');
   }
 
   //Get score - after each answer submitted (GET /score) 
@@ -75,7 +79,7 @@ var main = function () {
       type: 'GET',
       contentType: 'application/json',
       success: function (response) {
-        //scores only for that user
+        //TODO scores only for the user
         $('.score').text(response.right+', '+response.wrong);
       }
     });
@@ -85,7 +89,6 @@ var main = function () {
   $('.game').hide();
   $('.round').hide();
   $('.create').hide();
-
   $('#createShow').click(function() {
     $('.create').toggle();
   });
@@ -125,7 +128,6 @@ var main = function () {
     postQuestion();
   });
 
-  
   getQuestion();
   socket.on('newQuestion', function () {
     $('.round').hide();
@@ -139,7 +141,6 @@ var main = function () {
   socket.on('gameStart', function() {
     answered = false;
     var count = 15;
-    clearInterval(counter);
     
     var counter = setInterval(timer, 1000);
     $('#inputGuess').prop('disabled', false);
@@ -149,8 +150,7 @@ var main = function () {
     function timer() {
       $('.roundTime').text(count);
       count -= 1;
-      if (count < 0)
-      {
+      if (count < 0) {
         if (answered === false) {
           postGuess();
         }
@@ -161,7 +161,6 @@ var main = function () {
     }
   });
   
-
 }; //End of main
 
 $(document).ready(main);

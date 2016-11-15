@@ -45,6 +45,7 @@ answerSchema.plugin(autoIncrement.plugin, { model: 'Answer', field: 'answerId' }
 
 // store some questions if there are none-- 
 Question.count(function (err, count) {
+  'use strict';
   if (!err && count === 0) {
     var q = new Question({question: 'Who was the first computer programmer?'});
     var a = new Answer({answer: 'Ada Lovelace'});
@@ -88,8 +89,7 @@ io.sockets.on('connection', function(socket) {
         users[i].username = username;
       }
     }
-    client.set(username, {right: 0, wrong: 0});
-
+    client.set(username, '{right: 0, wrong: 0}');
   });
 
   socket.on('disconnect', function() {
