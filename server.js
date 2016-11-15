@@ -43,19 +43,24 @@ var Answer = mongoose.model('Answer', answerSchema);
 questionSchema.plugin(autoIncrement.plugin, { model: 'Question', field: 'answerId' });
 answerSchema.plugin(autoIncrement.plugin, { model: 'Answer', field: 'answerId' });
 
-// store some questions-- Note: these questions will add duplicates if server is restarted
-var q = new Question({question: 'Who was the first computer programmer?'});
-var a = new Answer({answer: 'Ada Lovelace'});
-q.save();
-a.save();
-q = new Question({question: 'Who led software development for NASA\'s Apollo lunar mission?'});
-a = new Answer({answer: 'Margaret Hamilton'});
-q.save();
-a.save();
-q = new Question({question: 'Who teaches CPSC 473 at CSU Fullerton?'});
-a = new Answer({answer: 'Kenytt Avery'});
-q.save();
-a.save();
+// store some questions if there are none-- 
+Question.count(function (err, count) {
+  if (!err && count === 0) {
+    var q = new Question({question: 'Who was the first computer programmer?'});
+    var a = new Answer({answer: 'Ada Lovelace'});
+    q.save();
+    a.save();
+    q = new Question({question: 'Who led software development for NASA\'s Apollo lunar mission?'});
+    a = new Answer({answer: 'Margaret Hamilton'});
+    q.save();
+    a.save();
+    q = new Question({question: 'Who teaches CPSC 473 at CSU Fullerton?'});
+    a = new Answer({answer: 'Kenytt Avery'});
+    q.save();
+    a.save();
+  }
+});
+
 
 // redis: store totals of right and wrong
 var client = redis.createClient();
